@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배드민턴 복식 게임 배정판</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .courts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .court-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .column-title {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #555;
+            padding: 6px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+
+        .court {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 100px;
+            background: #fafafa;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .court.game-court {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+
+        .court.game-court.lesson-court {
+            border-color: #9C27B0;
+            background: #f3e5f5;
+        }
+
+        .court.waiting-court {
+            border-color: #FF9800;
+            background: #fff3e0;
+        }
+
+        .court.drag-over {
+            border-color: #2196F3;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .court-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .court.waiting-court .court-title {
+            cursor: move;
+            user-select: none;
+        }
+
+        .court.waiting-court.dragging {
+            opacity: 0.6;
+            transform: scale(0.98);
+        }
+
+        .court-number {
+            font-size: 1em;
+        }
+
+        .end-game-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s;
+        }
+
+        .end-game-btn:hover {
+            background: #d32f2f;
+        }
+
+        .end-game-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .lesson-btn {
+            background: #9C27B0;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s;
+            margin-right: 4px;
+        }
+
+        .lesson-btn:hover {
+            background: #7B1FA2;
+        }
+
+        .lesson-btn.active {
+            background: #6A1B9A;
+            font-weight: bold;
+        }
+
+        .court-players {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 60px;
+        }
+
+        .player {
+            background: white;
+            border: 2px solid #2196F3;
+            border-radius: 6px;
+            padding: 4px 10px;
+            cursor: move;
+            user-select: none;
+            transition: all 0.2s;
+            position: relative;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .player.male {
+            border-color: #2196F3; /* 파란색 */
+        }
+
+        .player.female {
+            border-color: #E91E63; /* 핑크색 */
+        }
+
+        .player:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .player.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .player .delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player:hover .delete-btn {
+            display: flex;
+        }
+
+        .waiting-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .waiting-section {
+            background: #f5f5f5;
+            border: 2px dashed #999;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 120px;
+        }
+
+        .waiting-section.present-area {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+
+        .waiting-section.absent-area {
+            border-color: #9e9e9e;
+            background: #f5f5f5;
+        }
+
+        .waiting-section.drag-over {
+            border-color: #2196F3;
+            background: #e3f2fd;
+        }
+
+        .waiting-area-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .delete-all-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s;
+        }
+
+        .delete-all-btn:hover {
+            background: #d32f2f;
+        }
+
+        .reset-present-btn {
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s;
+        }
+
+        .reset-present-btn:hover {
+            background: #F57C00;
+        }
+
+        .waiting-players {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .player-management {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .player-management-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .add-player-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-player-input {
+            flex: 1;
+            max-width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .add-player-input:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        .add-player-select {
+            flex: 0 0 156px;
+            max-width: 156px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+        }
+
+        .add-player-select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        .add-player-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .add-player-btn:hover {
+            background: #45a049;
+        }
+
+        .empty-court-message {
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.85em;
+        }
+
+        .court-warning-message {
+            color: #f44336;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.85em;
+            background: #ffebee;
+            border-radius: 4px;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .courts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .waiting-area {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏸 배드민턴 복식 게임 배정판</h1>
+
+        <div class="courts-section">
+            <!-- 게임중 코트 -->
+            <div class="court-column">
+                <div class="column-title">게임중 코트</div>
+                <div class="court game-court" data-court-type="game" data-court-index="0" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">코트 A</span>
+                        <div>
+                            <button class="lesson-btn" onclick="toggleLessonCourt(0)">레슨 코트 지정</button>
+                            <button class="end-game-btn" onclick="endGame(0, 'game')">게임 종료</button>
+                        </div>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+                <div class="court game-court" data-court-type="game" data-court-index="1" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">코트 B</span>
+                        <div>
+                            <button class="lesson-btn" onclick="toggleLessonCourt(1)">레슨</button>
+                            <button class="end-game-btn" onclick="endGame(1, 'game')">게임 종료</button>
+                        </div>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+                <div class="court game-court" data-court-type="game" data-court-index="2" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">코트 C</span>
+                        <div>
+                            <button class="lesson-btn" onclick="toggleLessonCourt(2)">레슨</button>
+                            <button class="end-game-btn" onclick="endGame(2, 'game')">게임 종료</button>
+                        </div>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+                <div class="court game-court" data-court-type="game" data-court-index="3" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">코트 D</span>
+                        <div>
+                            <button class="lesson-btn" onclick="toggleLessonCourt(3)">레슨</button>
+                            <button class="end-game-btn" onclick="endGame(3, 'game')">게임 종료</button>
+                        </div>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+            </div>
+
+            <!-- 대기중 코트 -->
+            <div class="court-column">
+                <div class="column-title">대기중 코트</div>
+                <div class="court waiting-court" data-court-type="waiting" data-court-index="0" draggable="true" ondragstart="handleCourtDragStart(event)" ondragend="handleCourtDragEnd(event)" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">대기 코트 1</span>
+                        <button class="end-game-btn" onclick="resetCourt(0, 'waiting')">초기화</button>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+                <div class="court waiting-court" data-court-type="waiting" data-court-index="1" draggable="true" ondragstart="handleCourtDragStart(event)" ondragend="handleCourtDragEnd(event)" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">대기 코트 2</span>
+                        <button class="end-game-btn" onclick="resetCourt(1, 'waiting')">초기화</button>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+                <div class="court waiting-court" data-court-type="waiting" data-court-index="2" draggable="true" ondragstart="handleCourtDragStart(event)" ondragend="handleCourtDragEnd(event)" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">대기 코트 3</span>
+                        <button class="end-game-btn" onclick="resetCourt(2, 'waiting')">초기화</button>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+                <div class="court waiting-court" data-court-type="waiting" data-court-index="3" draggable="true" ondragstart="handleCourtDragStart(event)" ondragend="handleCourtDragEnd(event)" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                    <div class="court-title">
+                        <span class="court-number">대기 코트 4</span>
+                        <button class="end-game-btn" onclick="resetCourt(3, 'waiting')">초기화</button>
+                    </div>
+                    <div class="court-players"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 대기영역 -->
+        <div class="waiting-area">
+            <!-- 출석자 영역 -->
+            <div class="waiting-section present-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" data-area-type="present">
+                <div class="waiting-area-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>대기 선수</span>
+                    <button class="reset-present-btn" onclick="resetPresentArea()">전체 초기화(대기삭제)</button>
+                </div>
+                <div class="waiting-players" id="present-players"></div>
+            </div>
+            <!-- 미출석자 영역 -->
+            <div class="waiting-section absent-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" data-area-type="absent">
+                <div class="waiting-area-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>전체 선수</span>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="reset-present-btn" onclick="resetAbsentArea()">게임수 초기화</button>
+                        <button class="delete-all-btn" onclick="deleteAllAbsentPlayers()">전체 삭제</button>
+                    </div>
+                </div>
+                <div class="waiting-players" id="absent-players"></div>
+            </div>
+        </div>
+
+        <!-- 선수 관리 -->
+        <div class="player-management">
+            <div class="player-management-title">선수 관리</div>
+            <div class="add-player-form">
+                <input type="text" class="add-player-input" id="player-name-input" placeholder="선수 이름" onkeypress="handleKeyPress(event)">
+                <select class="add-player-select" id="player-grade-input" required>
+                    <option value="">등급 선택 (필수)</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="초심">초심</option>
+                </select>
+                <select class="add-player-select" id="player-gender-input" required>
+                    <option value="">성별 선택 (필수)</option>
+                    <option value="남">남</option>
+                    <option value="여">여</option>
+                </select>
+                <button class="add-player-btn" onclick="addPlayer()">선수 추가</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 데이터 구조
+        let gameData = {
+            players: [],
+            gameCourts: [[], [], [], []],
+            waitingCourts: [[], [], [], []],
+            presentArea: [],  // 출석자 영역
+            absentArea: [],   // 미출석자 영역
+            lessonCourts: [false, false, false, false],  // 레슨 코트 여부
+            gameHistory: []  // 게임 코트 배정 히스토리 (선수 ID 배열의 배열)
+        };
+
+        let nextPlayerId = 1;
+
+        // 로컬 스토리지에서 데이터 로드
+        function loadData() {
+            const saved = localStorage.getItem('badmintonGameData');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                gameData = parsed;
+                
+                // 기존 데이터 호환성: waitingArea가 있으면 presentArea로 마이그레이션
+                if (parsed.waitingArea && parsed.waitingArea.length > 0) {
+                    if (!gameData.presentArea) {
+                        gameData.presentArea = [];
+                    }
+                    parsed.waitingArea.forEach(playerId => {
+                        if (!gameData.presentArea.includes(playerId)) {
+                            gameData.presentArea.push(playerId);
+                        }
+                    });
+                    delete gameData.waitingArea;
+                }
+                
+                // presentArea와 absentArea가 없으면 초기화
+                if (!gameData.presentArea) {
+                    gameData.presentArea = [];
+                }
+                if (!gameData.absentArea) {
+                    gameData.absentArea = [];
+                }
+                
+                // lessonCourts가 없으면 초기화
+                if (!gameData.lessonCourts) {
+                    gameData.lessonCourts = [false, false, false, false];
+                }
+                
+                // gameHistory가 없으면 초기화
+                if (!gameData.gameHistory) {
+                    gameData.gameHistory = [];
+                }
+                
+                // 기존 선수 데이터에 grade 필드가 없으면 추가 (호환성)
+                gameData.players.forEach(player => {
+                    if (!player.hasOwnProperty('grade')) {
+                        player.grade = '';
+                    }
+                    // 기존 선수 데이터에 gameCount 필드가 없으면 추가 (호환성)
+                    if (!player.hasOwnProperty('gameCount')) {
+                        player.gameCount = 0;
+                    }
+                    // 기존 선수 데이터에 gender 필드가 없으면 추가 (호환성)
+                    if (!player.hasOwnProperty('gender')) {
+                        player.gender = '남'; // 기본값 남성
+                    }
+                });
+                
+                // nextPlayerId 계산
+                if (gameData.players.length > 0) {
+                    nextPlayerId = Math.max(...gameData.players.map(p => p.id)) + 1;
+                }
+                
+                // 마이그레이션 후 저장
+                saveData();
+            }
+            render();
+        }
+
+        // 로컬 스토리지에 데이터 저장
+        function saveData() {
+            localStorage.setItem('badmintonGameData', JSON.stringify(gameData));
+        }
+
+        // 선수 추가
+        function addPlayer() {
+            const nameInput = document.getElementById('player-name-input');
+            const gradeInput = document.getElementById('player-grade-input');
+            const genderInput = document.getElementById('player-gender-input');
+            const name = nameInput.value.trim();
+            const grade = gradeInput.value;
+            const gender = genderInput.value;
+            
+            if (name === '') {
+                alert('선수 이름을 입력하세요.');
+                return;
+            }
+
+            if (grade === '') {
+                alert('등급을 선택하세요.');
+                gradeInput.focus();
+                return;
+            }
+
+            if (gender === '') {
+                alert('성별을 선택하세요.');
+                genderInput.focus();
+                return;
+            }
+
+            // 이름 중복 체크
+            const isDuplicate = gameData.players.some(player => player.name.trim() === name);
+            if (isDuplicate) {
+                alert('이미 등록된 선수 이름입니다. 다른 이름을 사용하세요.');
+                nameInput.focus();
+                return;
+            }
+
+            const player = {
+                id: nextPlayerId++,
+                name: name,
+                grade: grade,
+                gender: gender,
+                gameCount: 0
+            };
+
+            gameData.players.push(player);
+            gameData.absentArea.push(player.id);  // 기본적으로 미출석자 영역에 추가
+            nameInput.value = '';
+            gradeInput.value = '';
+            genderInput.value = '';
+            saveData();
+            render();
+        }
+
+        // 키보드 이벤트 처리 (Enter 키)
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                addPlayer();
+            }
+        }
+
+        // 선수 삭제 또는 미출석자로 이동
+        function deletePlayer(playerId) {
+            const isInPresentArea = gameData.presentArea.includes(playerId);
+            const isInAbsentArea = gameData.absentArea.includes(playerId);
+            
+            // 출석자인 경우 미출석자로 이동
+            if (isInPresentArea) {
+                // 코트에 있는 경우도 처리
+                removePlayerFromAllCourts(playerId);
+                gameData.presentArea = gameData.presentArea.filter(id => id !== playerId);
+                if (!gameData.absentArea.includes(playerId)) {
+                    gameData.absentArea.push(playerId);
+                }
+                saveData();
+                render();
+                return;
+            }
+            
+            // 미출석자인 경우에만 실제 삭제
+            if (!isInAbsentArea) {
+                alert('대기영역의 선수만 삭제할 수 있습니다.');
+                return;
+            }
+
+            if (!confirm('정말 이 선수를 삭제하시겠습니까?')) {
+                return;
+            }
+
+            // 모든 위치에서 선수 제거
+            gameData.presentArea = gameData.presentArea.filter(id => id !== playerId);
+            gameData.absentArea = gameData.absentArea.filter(id => id !== playerId);
+            gameData.gameCourts.forEach(court => {
+                const index = court.indexOf(playerId);
+                if (index > -1) court.splice(index, 1);
+            });
+            gameData.waitingCourts.forEach(court => {
+                const index = court.indexOf(playerId);
+                if (index > -1) court.splice(index, 1);
+            });
+            gameData.players = gameData.players.filter(p => p.id !== playerId);
+            
+            saveData();
+            render();
+        }
+
+        // 출석 대기 영역 초기화 (미출석으로 이동)
+        function resetPresentArea() {
+            if (gameData.presentArea.length === 0) {
+                alert('초기화할 출석 대기 선수가 없습니다.');
+                return;
+            }
+
+            const count = gameData.presentArea.length;
+            if (!confirm(`출석 대기 ${count}명을 모두 미출석으로 이동하시겠습니까?`)) {
+                return;
+            }
+
+            // 출석 대기 영역의 모든 선수 ID 저장
+            const presentPlayerIds = [...gameData.presentArea];
+
+            // 출석 대기 영역에서 제거하고 미출석 영역으로 이동
+            presentPlayerIds.forEach(playerId => {
+                // 출석 대기 영역에서 제거
+                gameData.presentArea = gameData.presentArea.filter(id => id !== playerId);
+                // 미출석 영역에 추가 (중복 방지)
+                if (!gameData.absentArea.includes(playerId)) {
+                    gameData.absentArea.push(playerId);
+                }
+            });
+            
+            saveData();
+            render();
+        }
+
+        // 미출석자 전체 초기화 (게임 수 0으로 설정)
+        function resetAbsentArea() {
+            if (gameData.absentArea.length === 0) {
+                alert('게임수 초기화할 미출석자가 없습니다.');
+                return;
+            }
+
+            const count = gameData.absentArea.length;
+            if (!confirm(`미출석자 ${count}명의 게임 수를 모두 0으로 초기화하시겠습니까?`)) {
+                return;
+            }
+
+            // 미출석자 영역의 모든 선수의 게임 수를 0으로 설정
+            gameData.absentArea.forEach(playerId => {
+                const player = gameData.players.find(p => p.id === playerId);
+                if (player) {
+                    player.gameCount = 0;
+                }
+            });
+            
+            saveData();
+            render();
+        }
+
+        // 미출석자 전체 삭제
+        function deleteAllAbsentPlayers() {
+            if (gameData.absentArea.length === 0) {
+                alert('삭제할 미출석자가 없습니다.');
+                return;
+            }
+
+            const count = gameData.absentArea.length;
+            if (!confirm(`정말 미출석자 ${count}명을 모두 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            // 미출석자 영역의 모든 선수 ID 저장
+            const absentPlayerIds = [...gameData.absentArea];
+
+            // 모든 위치에서 선수 제거
+            absentPlayerIds.forEach(playerId => {
+                gameData.presentArea = gameData.presentArea.filter(id => id !== playerId);
+                gameData.absentArea = gameData.absentArea.filter(id => id !== playerId);
+                gameData.gameCourts.forEach(court => {
+                    const index = court.indexOf(playerId);
+                    if (index > -1) court.splice(index, 1);
+                });
+                gameData.waitingCourts.forEach(court => {
+                    const index = court.indexOf(playerId);
+                    if (index > -1) court.splice(index, 1);
+                });
+            });
+
+            // 선수 목록에서도 제거
+            gameData.players = gameData.players.filter(p => !absentPlayerIds.includes(p.id));
+            
+            saveData();
+            render();
+        }
+
+        // 코트 드래그 시작 (대기 코트 전체)
+        function handleCourtDragStart(event) {
+            // 코트 자체를 드래그하는 경우만 처리
+            if (!event.target.classList.contains('waiting-court')) {
+                return;
+            }
+            
+            event.stopPropagation();
+            event.dataTransfer.effectAllowed = 'move';
+            const courtIndex = parseInt(event.target.dataset.courtIndex);
+            event.dataTransfer.setData('courtDrag', 'true');
+            event.dataTransfer.setData('sourceCourtType', 'waiting');
+            event.dataTransfer.setData('sourceCourtIndex', courtIndex.toString());
+            event.target.classList.add('dragging');
+        }
+
+        // 코트 드래그 종료
+        function handleCourtDragEnd(event) {
+            if (event.target.classList.contains('waiting-court')) {
+                event.target.classList.remove('dragging');
+                // 모든 드롭 존에서 drag-over 클래스 제거
+                document.querySelectorAll('.court').forEach(court => {
+                    court.classList.remove('drag-over');
+                });
+            }
+        }
+
+        // 선수 드래그 시작
+        function handleDragStart(event) {
+            // 코트 드래그가 아닌 경우만 처리
+            if (event.target.closest('.waiting-court') && event.target.closest('.waiting-court') === event.target) {
+                return;
+            }
+            
+            event.dataTransfer.effectAllowed = 'move';
+            const playerId = event.target.dataset.playerId;
+            if (!playerId) return;
+            
+            event.dataTransfer.setData('text/plain', playerId);
+            event.dataTransfer.setData('courtDrag', 'false');
+            
+            // 드래그 시작한 선수가 어느 코트에 있는지 확인
+            let sourceCourtType = null;
+            let sourceCourtIndex = null;
+            
+            // 게임중 코트 확인
+            for (let i = 0; i < gameData.gameCourts.length; i++) {
+                if (gameData.gameCourts[i].includes(parseInt(playerId))) {
+                    sourceCourtType = 'game';
+                    sourceCourtIndex = i;
+                    break;
+                }
+            }
+            
+            // 대기중 코트 확인
+            if (!sourceCourtType) {
+                for (let i = 0; i < gameData.waitingCourts.length; i++) {
+                    if (gameData.waitingCourts[i].includes(parseInt(playerId))) {
+                        sourceCourtType = 'waiting';
+                        sourceCourtIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            // 소스 정보 저장
+            event.dataTransfer.setData('sourceCourtType', sourceCourtType || '');
+            event.dataTransfer.setData('sourceCourtIndex', sourceCourtIndex !== null ? sourceCourtIndex.toString() : '');
+            
+            event.target.classList.add('dragging');
+        }
+
+        // 드래그 종료
+        function handleDragEnd(event) {
+            event.target.classList.remove('dragging');
+            // 모든 드롭 존에서 drag-over 클래스 제거
+            document.querySelectorAll('.court').forEach(court => {
+                court.classList.remove('drag-over');
+            });
+            document.querySelector('.waiting-area').classList.remove('drag-over');
+        }
+
+        // 드래그 오버
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            
+            const dropZone = event.currentTarget.closest('.court') || event.currentTarget;
+            dropZone.classList.add('drag-over');
+        }
+
+        // 드래그 리브
+        function handleDragLeave(event) {
+            const dropZone = event.currentTarget.closest('.court') || event.currentTarget;
+            // 자식 요소로 이동하는 경우는 제외
+            if (!dropZone.contains(event.relatedTarget)) {
+                dropZone.classList.remove('drag-over');
+            }
+        }
+
+        // 드롭 처리
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation(); // 이벤트 버블링 방지
+            const dropZone = event.currentTarget.closest('.court') || event.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            // 코트 전체 드래그인지 확인
+            const isCourtDrag = event.dataTransfer.getData('courtDrag') === 'true';
+            
+            if (isCourtDrag) {
+                // 코트 전체 드래그 처리
+                const sourceCourtType = event.dataTransfer.getData('sourceCourtType');
+                const sourceCourtIndex = parseInt(event.dataTransfer.getData('sourceCourtIndex'));
+                
+                if (dropZone.classList.contains('court')) {
+                    const courtElement = dropZone.closest('.court');
+                    const targetCourtType = courtElement.dataset.courtType;
+                    const targetCourtIndex = parseInt(courtElement.dataset.courtIndex);
+                    
+                    // 대기 코트에서 게임중 코트로 드래그하는 경우만 처리
+                    if (sourceCourtType === 'waiting' && targetCourtType === 'game') {
+                        const sourceCourt = gameData.waitingCourts[sourceCourtIndex];
+                        const targetCourt = gameData.gameCourts[targetCourtIndex];
+                        
+                        // 대기 코트에 선수가 없으면 변화 없음
+                        if (sourceCourt.length === 0) {
+                            return;
+                        }
+                        
+                        // 대기 코트의 모든 선수를 게임중 코트로 이동
+                        const playersToMove = [...sourceCourt];
+                        
+                        // 용량 확인 (대기 코트의 선수만 체크, 기존 선수는 출석 대기로 이동하므로)
+                        if (playersToMove.length > 4) {
+                            alert('코트는 최대 4명까지 배정할 수 있습니다.');
+                            return;
+                        }
+                        
+                        // 게임중 코트의 기존 선수들을 출석 대기로 이동 (게임 종료 처리)
+                        const existingPlayers = [...targetCourt];
+                        existingPlayers.forEach(existingPlayerId => {
+                            // 게임 종료: 게임 수 증가 (레슨 코트 제외)
+                            if (!gameData.lessonCourts || !gameData.lessonCourts[targetCourtIndex]) {
+                                const player = gameData.players.find(p => p.id === existingPlayerId);
+                                if (player) {
+                                    if (!player.gameCount) {
+                                        player.gameCount = 0;
+                                    }
+                                    player.gameCount++;
+                                }
+                            }
+                            
+                            // 출석자 영역에서 제거 (중복 방지)
+                            gameData.presentArea = gameData.presentArea.filter(id => id !== existingPlayerId);
+                            gameData.absentArea = gameData.absentArea.filter(id => id !== existingPlayerId);
+                            // 출석 대기 영역에 추가
+                            if (!gameData.presentArea.includes(existingPlayerId)) {
+                                gameData.presentArea.push(existingPlayerId);
+                            }
+                        });
+                        
+                        // 게임중 코트 비우기
+                        targetCourt.length = 0;
+                        
+                        // 대기 코트의 선수들을 게임중 코트로 이동
+                        playersToMove.forEach(movePlayerId => {
+                            // 출석자 영역에서 제거 (코트에 배정되므로)
+                            gameData.presentArea = gameData.presentArea.filter(id => id !== movePlayerId);
+                            gameData.absentArea = gameData.absentArea.filter(id => id !== movePlayerId);
+                            // 게임중 코트에 추가
+                            if (!targetCourt.includes(movePlayerId)) {
+                                targetCourt.push(movePlayerId);
+                            }
+                        });
+                        
+                        // 대기 코트 비우기
+                        sourceCourt.length = 0;
+                        
+                        // 게임 코트 히스토리 저장 (레슨 코트 제외)
+                        saveGameHistory(targetCourt, targetCourtIndex);
+                        
+                        saveData();
+                        render();
+                        return;
+                    }
+                }
+                return;
+            }
+
+            // 선수 개별 드래그 처리
+            const playerId = parseInt(event.dataTransfer.getData('text/plain'));
+            if (!playerId) return;
+            
+            // 드롭 존이 코트인지 확인
+            if (dropZone.classList.contains('court')) {
+                const courtElement = dropZone.closest('.court');
+                const targetCourtType = courtElement.dataset.courtType;
+                const targetCourtIndex = parseInt(courtElement.dataset.courtIndex);
+                
+                // 소스 코트 정보 가져오기
+                const sourceCourtType = event.dataTransfer.getData('sourceCourtType');
+                const sourceCourtIndex = event.dataTransfer.getData('sourceCourtIndex') !== '' 
+                    ? parseInt(event.dataTransfer.getData('sourceCourtIndex')) 
+                    : null;
+                
+                const targetCourt = targetCourtType === 'game' 
+                    ? gameData.gameCourts[targetCourtIndex] 
+                    : gameData.waitingCourts[targetCourtIndex];
+                
+                // 개별 선수 드래그는 일반 드래그 앤 드롭 로직으로 처리
+                // (대기 코트의 모든 선수를 이동시키지 않고, 드래그한 선수만 이동)
+                
+                // 대기 코트에서 게임 코트로 이동 처리
+                if (sourceCourtType === 'waiting' && targetCourtType === 'game' && sourceCourtIndex !== null) {
+                    const sourceCourt = gameData.waitingCourts[sourceCourtIndex];
+                    
+                    // 용량 확인 (최대 4명)
+                    if (targetCourt.length >= 4) {
+                        alert('코트는 최대 4명까지 배정할 수 있습니다.');
+                        return;
+                    }
+                    
+                    // 이미 해당 코트에 있는 경우 무시
+                    if (targetCourt.includes(playerId)) {
+                        return;
+                    }
+                    
+                    // 기존 위치에서 제거
+                    const index = sourceCourt.indexOf(playerId);
+                    if (index > -1) {
+                        sourceCourt.splice(index, 1);
+                    }
+                    
+                    // 게임 코트에 추가
+                    targetCourt.push(playerId);
+                    
+                    // 게임 코트 히스토리 저장 (레슨 코트 제외)
+                    saveGameHistory(targetCourt, targetCourtIndex);
+                    
+                    saveData();
+                    render();
+                    return;
+                }
+                
+                // 게임 코트 간 이동 처리 (게임 코트 내에서 선수 이동 가능)
+                if (sourceCourtType === 'game' && targetCourtType === 'game' && sourceCourtIndex !== null) {
+                    const sourceCourt = gameData.gameCourts[sourceCourtIndex];
+                    
+                    // 같은 게임 코트 내 이동인 경우 순서만 변경
+                    if (sourceCourtIndex === targetCourtIndex) {
+                        // 이미 같은 코트에 있으므로 순서 변경만 허용
+                        // 실제로는 removePlayerFromAllCourts가 호출되므로 재배치됨
+                    } else {
+                        // 다른 게임 코트로 이동
+                        if (targetCourt.length >= 4) {
+                            alert('코트는 최대 4명까지 배정할 수 있습니다.');
+                            return;
+                        }
+                    }
+                    
+                    // 기존 위치에서 제거
+                    const index = sourceCourt.indexOf(playerId);
+                    if (index > -1) {
+                        sourceCourt.splice(index, 1);
+                    }
+                    
+                    // 새 위치에 추가
+                    if (!targetCourt.includes(playerId)) {
+                        targetCourt.push(playerId);
+                    }
+                    
+                    // 게임 코트 히스토리 저장 (레슨 코트 제외)
+                    saveGameHistory(targetCourt, targetCourtIndex);
+                    
+                    saveData();
+                    render();
+                    return;
+                }
+                
+                // 게임 코트에서 대기 코트로 이동 처리
+                if (sourceCourtType === 'game' && targetCourtType === 'waiting' && sourceCourtIndex !== null) {
+                    const sourceCourt = gameData.gameCourts[sourceCourtIndex];
+                    
+                    // 용량 확인 (최대 4명)
+                    if (targetCourt.length >= 4) {
+                        alert('코트는 최대 4명까지 배정할 수 있습니다.');
+                        return;
+                    }
+                    
+                    // 이미 해당 코트에 있는 경우 무시
+                    if (targetCourt.includes(playerId)) {
+                        return;
+                    }
+                    
+                    // 기존 위치에서 제거
+                    const index = sourceCourt.indexOf(playerId);
+                    if (index > -1) {
+                        sourceCourt.splice(index, 1);
+                    }
+                    
+                    // 대기 코트에 추가
+                    targetCourt.push(playerId);
+                    
+                    saveData();
+                    render();
+                    return;
+                }
+                
+                // 대기 코트 간 이동 처리 (대기 코트 내에서 선수 이동 가능)
+                if (sourceCourtType === 'waiting' && targetCourtType === 'waiting' && sourceCourtIndex !== null) {
+                    const sourceCourt = gameData.waitingCourts[sourceCourtIndex];
+                    
+                    // 같은 대기 코트 내 이동인 경우 순서만 변경
+                    if (sourceCourtIndex === targetCourtIndex) {
+                        // 이미 같은 코트에 있으므로 순서 변경만 허용
+                        // 실제로는 removePlayerFromAllCourts가 호출되므로 재배치됨
+                    } else {
+                        // 다른 대기 코트로 이동
+                        if (targetCourt.length >= 4) {
+                            alert('코트는 최대 4명까지 배정할 수 있습니다.');
+                            return;
+                        }
+                    }
+                    
+                    // 기존 위치에서 제거
+                    const index = sourceCourt.indexOf(playerId);
+                    if (index > -1) {
+                        sourceCourt.splice(index, 1);
+                    }
+                    
+                    // 새 위치에 추가
+                    if (!targetCourt.includes(playerId)) {
+                        targetCourt.push(playerId);
+                    }
+                    
+                    saveData();
+                    render();
+                    return;
+                }
+                
+                // 일반 드래그 앤 드롭 로직 (기존)
+                // 출석자만 코트로 배정 가능
+                if (!gameData.presentArea.includes(playerId)) {
+                    const courtTypeName = targetCourtType === 'game' ? '게임 코트' : '대기 코트';
+                    alert(`출석자만 ${courtTypeName}에 배정이 가능합니다.`);
+                    return;
+                }
+
+                // 용량 확인 (최대 4명)
+                if (targetCourt.length >= 4) {
+                    alert('코트는 최대 4명까지 배정할 수 있습니다.');
+                    return;
+                }
+
+                // 이미 해당 코트에 있는 경우 무시 (다른 코트에서 온 경우만 처리)
+                if (targetCourt.includes(playerId)) {
+                    return;
+                }
+
+                // 기존 위치에서 제거
+                removePlayerFromAllCourts(playerId);
+                gameData.presentArea = gameData.presentArea.filter(id => id !== playerId);
+                gameData.absentArea = gameData.absentArea.filter(id => id !== playerId);
+
+                // 새 위치에 추가
+                targetCourt.push(playerId);
+                
+                // 게임 코트 히스토리 저장 (레슨 코트 제외)
+                if (targetCourtType === 'game') {
+                    saveGameHistory(targetCourt, targetCourtIndex);
+                }
+            } else if (dropZone.classList.contains('waiting-section')) {
+                // 대기영역으로 이동
+                const areaType = dropZone.dataset.areaType;
+                
+                // 출석 대기 영역 내에서 순서 변경
+                if (areaType === 'present' && gameData.presentArea.includes(playerId)) {
+                    // 출석 대기 영역 내에서 드래그한 경우 순서만 변경
+                    const sourceIndex = gameData.presentArea.indexOf(playerId);
+                    gameData.presentArea.splice(sourceIndex, 1);
+                    
+                    // 드롭 위치에서 가장 가까운 선수 요소 찾기
+                    const presentContainer = document.getElementById('present-players');
+                    const dropX = event.clientX;
+                    const dropY = event.clientY;
+                    
+                    // 드롭 위치의 요소 찾기
+                    const elementBelow = document.elementFromPoint(dropX, dropY);
+                    let targetPlayerElement = null;
+                    
+                    // 드롭 위치에서 선수 요소 찾기 (부모 요소까지 확인)
+                    if (elementBelow) {
+                        targetPlayerElement = elementBelow.closest('.player');
+                        if (!targetPlayerElement || !presentContainer.contains(targetPlayerElement)) {
+                            // 드롭 위치에서 가장 가까운 선수 요소 찾기
+                            const children = Array.from(presentContainer.children);
+                            let minDistance = Infinity;
+                            for (const child of children) {
+                                const rect = child.getBoundingClientRect();
+                                const centerY = rect.top + rect.height / 2;
+                                const distance = Math.abs(dropY - centerY);
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    targetPlayerElement = child;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 타겟 선수의 바로 앞에 삽입
+                    if (targetPlayerElement && targetPlayerElement.dataset.playerId) {
+                        const targetPlayerId = parseInt(targetPlayerElement.dataset.playerId);
+                        const targetIndex = gameData.presentArea.indexOf(targetPlayerId);
+                        if (targetIndex !== -1) {
+                            gameData.presentArea.splice(targetIndex, 0, playerId);
+                        } else {
+                            gameData.presentArea.push(playerId);
+                        }
+                    } else {
+                        // 타겟을 찾지 못한 경우 맨 앞에 추가
+                        gameData.presentArea.unshift(playerId);
+                    }
+                } else {
+                    // 다른 영역에서 출석 대기 영역으로 이동
+                    removePlayerFromAllCourts(playerId);
+                    gameData.presentArea = gameData.presentArea.filter(id => id !== playerId);
+                    gameData.absentArea = gameData.absentArea.filter(id => id !== playerId);
+                    
+                    if (areaType === 'present') {
+                        gameData.presentArea.push(playerId);
+                    } else {
+                        gameData.absentArea.push(playerId);
+                    }
+                }
+            }
+
+            saveData();
+            render();
+        }
+
+        // 모든 코트에서 선수 제거
+        function removePlayerFromAllCourts(playerId) {
+            gameData.gameCourts.forEach(court => {
+                const index = court.indexOf(playerId);
+                if (index > -1) court.splice(index, 1);
+            });
+            gameData.waitingCourts.forEach(court => {
+                const index = court.indexOf(playerId);
+                if (index > -1) court.splice(index, 1);
+            });
+        }
+
+        // 게임 종료
+        function endGame(courtIndex, courtType) {
+            const targetCourt = courtType === 'game' 
+                ? gameData.gameCourts[courtIndex] 
+                : gameData.waitingCourts[courtIndex];
+
+            if (targetCourt.length === 0) {
+                alert('배정된 선수가 없습니다.');
+                return;
+            }
+
+            // 게임 코트인 경우 선수들의 게임 수 증가 (레슨 코트 제외)
+            if (courtType === 'game' && (!gameData.lessonCourts || !gameData.lessonCourts[courtIndex])) {
+                targetCourt.forEach(playerId => {
+                    const player = gameData.players.find(p => p.id === playerId);
+                    if (player) {
+                        if (!player.gameCount) {
+                            player.gameCount = 0;
+                        }
+                        player.gameCount++;
+                    }
+                });
+            }
+
+            // 모든 선수를 출석자 영역으로 이동
+            targetCourt.forEach(playerId => {
+                if (!gameData.presentArea.includes(playerId)) {
+                    gameData.presentArea.push(playerId);
+                }
+            });
+
+            // 코트 비우기
+            targetCourt.length = 0;
+
+            saveData();
+            render();
+        }
+
+        // 코트 초기화 (대기중 코트용)
+        function resetCourt(courtIndex, courtType) {
+            const targetCourt = courtType === 'waiting' 
+                ? gameData.waitingCourts[courtIndex] 
+                : gameData.gameCourts[courtIndex];
+
+            if (targetCourt.length === 0) {
+                alert('배정된 선수가 없습니다.');
+                return;
+            }
+
+            // 모든 선수를 출석자 영역으로 이동
+            targetCourt.forEach(playerId => {
+                if (!gameData.presentArea.includes(playerId)) {
+                    gameData.presentArea.push(playerId);
+                }
+            });
+
+            // 코트 비우기
+            targetCourt.length = 0;
+
+            saveData();
+            render();
+        }
+
+        // 레슨 코트 토글
+        function toggleLessonCourt(courtIndex) {
+            if (!gameData.lessonCourts) {
+                gameData.lessonCourts = [false, false, false, false];
+            }
+            gameData.lessonCourts[courtIndex] = !gameData.lessonCourts[courtIndex];
+            saveData();
+            render();
+        }
+
+        // 게임 코트 배정 히스토리 저장
+        function saveGameHistory(court, courtIndex) {
+            // 레슨 코트는 히스토리에 저장하지 않음
+            if (courtIndex !== null && gameData.lessonCourts && gameData.lessonCourts[courtIndex]) {
+                return;
+            }
+            
+            if (court.length === 4) {
+                // 선수 ID 배열을 정렬해서 저장 (순서 무관하게 비교하기 위해)
+                const sortedPlayerIds = [...court].sort((a, b) => a - b);
+                
+                // 중복 체크 (같은 인원이 이미 히스토리에 있으면 추가하지 않음)
+                const isDuplicate = gameData.gameHistory.some(history => {
+                    const sortedHistory = [...history].sort((a, b) => a - b);
+                    return JSON.stringify(sortedHistory) === JSON.stringify(sortedPlayerIds);
+                });
+                
+                if (!isDuplicate) {
+                    gameData.gameHistory.push([...court]);
+                    saveData();
+                }
+            }
+        }
+
+        // 대기 코트에 같은 인원이 게임 코트에 배정된 적이 있는지 확인
+        function checkGameHistory(court) {
+            if (court.length !== 4) {
+                return null;
+            }
+
+            // 선수 ID 배열을 정렬해서 비교
+            const sortedPlayerIds = [...court].sort((a, b) => a - b);
+            
+            // 히스토리에서 같은 인원 찾기
+            const hasHistory = gameData.gameHistory.some(history => {
+                const sortedHistory = [...history].sort((a, b) => a - b);
+                return JSON.stringify(sortedHistory) === JSON.stringify(sortedPlayerIds);
+            });
+
+            if (hasHistory) {
+                // 선수 이름 가져오기
+                const playerNames = court.map(playerId => {
+                    const player = gameData.players.find(p => p.id === playerId);
+                    return player ? player.name : '';
+                }).filter(name => name !== '');
+                
+                return `ℹ️ 이전에 게임 코트에 배정된 적이 있는 조합입니다.`;
+            }
+
+            return null;
+        }
+
+        // 등급 체크 함수 (대기 코트에 4명 배정 시 적절성 확인)
+        function checkGradeBalance(court) {
+            if (court.length !== 4) {
+                return null; // 4명이 아니면 체크하지 않음
+            }
+
+            // 등급 순서 정의 (숫자가 클수록 높은 등급)
+            const gradeOrder = {
+                'A': 5,
+                'B': 4,
+                'C': 3,
+                'D': 2,
+                '초심': 1
+            };
+
+            // 선수들의 등급 가져오기
+            const playerGrades = court.map(playerId => {
+                const player = gameData.players.find(p => p.id === playerId);
+                if (!player || !player.grade) return null;
+                return {
+                    id: playerId,
+                    name: player.name,
+                    grade: player.grade,
+                    gradeValue: gradeOrder[player.grade] || 0
+                };
+            }).filter(p => p !== null && p.gradeValue > 0);
+
+            if (playerGrades.length !== 4) {
+                return null; // 등급이 없는 선수가 있으면 체크하지 않음
+            }
+
+            // 등급 값으로 정렬 (높은 등급부터)
+            const sortedGrades = [...playerGrades].sort((a, b) => b.gradeValue - a.gradeValue);
+
+            // 룰 1: 제일 높은 등급과 제일 낮은 등급이 한 팀
+            const team1GradeSum = sortedGrades[0].gradeValue + sortedGrades[3].gradeValue;
+            
+            // 룰 2: 나머지 2명이 한 팀
+            const team2GradeSum = sortedGrades[1].gradeValue + sortedGrades[2].gradeValue;
+
+            // 룰 3: 팀간 등급 합의 차이가 2레벨 이상이면 부적절
+            const gradeDiff = Math.abs(team1GradeSum - team2GradeSum);
+
+            if (gradeDiff >= 2) {
+                // 등급 이름으로 변환
+                const team1Grades = [sortedGrades[0].grade, sortedGrades[3].grade].sort((a, b) => gradeOrder[b] - gradeOrder[a]);
+                const team2Grades = [sortedGrades[1].grade, sortedGrades[2].grade].sort((a, b) => gradeOrder[b] - gradeOrder[a]);
+                
+                return `⚠️ 등급 불균형: 팀1(${team1Grades.join(', ')})과 팀2(${team2Grades.join(', ')})의 등급 차이가 큽니다.`;
+            }
+
+            return null; // 적절한 배정
+        }
+
+        // 선수 요소 생성
+        function createPlayerElement(player, showDelete = false) {
+            const div = document.createElement('div');
+            div.className = 'player';
+            
+            // 성별에 따라 클래스 추가
+            const gender = player.gender || '남';
+            if (gender === '여') {
+                div.classList.add('female');
+            } else {
+                div.classList.add('male');
+            }
+            
+            div.dataset.playerId = player.id;
+            div.draggable = true;
+            
+            // 이름, 등급, 게임 수 표시
+            let displayText = player.name;
+            if (player.grade) {
+                displayText += ` (${player.grade})`;
+            }
+            const gameCount = player.gameCount || 0;
+            if (gameCount > 0) {
+                displayText += ` [${gameCount}게임]`;
+            }
+            div.textContent = displayText;
+            
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragend', handleDragEnd);
+
+            if (showDelete) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deletePlayer(player.id);
+                };
+                div.appendChild(deleteBtn);
+            }
+
+            return div;
+        }
+
+        // 렌더링
+        function render() {
+            // 출석자 영역 렌더링
+            const presentPlayersContainer = document.getElementById('present-players');
+            presentPlayersContainer.innerHTML = '';
+            
+            gameData.presentArea.forEach(playerId => {
+                const player = gameData.players.find(p => p.id === playerId);
+                if (player) {
+                    const playerElement = createPlayerElement(player, true);
+                    presentPlayersContainer.appendChild(playerElement);
+                }
+            });
+
+            // 미출석자 영역 렌더링 (이름 순으로 정렬)
+            const absentPlayersContainer = document.getElementById('absent-players');
+            absentPlayersContainer.innerHTML = '';
+            
+            // 미출석자 선수들을 이름 순으로 정렬
+            const absentPlayers = gameData.absentArea
+                .map(playerId => gameData.players.find(p => p.id === playerId))
+                .filter(player => player !== undefined)
+                .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+            
+            absentPlayers.forEach(player => {
+                const playerElement = createPlayerElement(player, true);
+                absentPlayersContainer.appendChild(playerElement);
+            });
+
+            // 게임중 코트 렌더링
+            gameData.gameCourts.forEach((court, index) => {
+                const courtElement = document.querySelector(`.court.game-court[data-court-index="${index}"] .court-players`);
+                courtElement.innerHTML = '';
+                
+                if (court.length === 0) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'empty-court-message';
+                    emptyMsg.textContent = '선수를 드래그하여 배정하세요';
+                    courtElement.appendChild(emptyMsg);
+                } else {
+                    court.forEach(playerId => {
+                        const player = gameData.players.find(p => p.id === playerId);
+                        if (player) {
+                            const playerElement = createPlayerElement(player);
+                            courtElement.appendChild(playerElement);
+                        }
+                    });
+                }
+            });
+
+            // 대기중 코트 렌더링
+            gameData.waitingCourts.forEach((court, index) => {
+                const courtElement = document.querySelector(`.court.waiting-court[data-court-index="${index}"] .court-players`);
+                courtElement.innerHTML = '';
+                
+                if (court.length === 0) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'empty-court-message';
+                    emptyMsg.textContent = '선수를 드래그하여 배정하세요';
+                    courtElement.appendChild(emptyMsg);
+                } else {
+                    court.forEach(playerId => {
+                        const player = gameData.players.find(p => p.id === playerId);
+                        if (player) {
+                            const playerElement = createPlayerElement(player);
+                            courtElement.appendChild(playerElement);
+                        }
+                    });
+                    
+                    // 4명이 배정되었을 때 등급 체크 및 히스토리 체크
+                    if (court.length === 4) {
+                        const warningMessage = checkGradeBalance(court);
+                        if (warningMessage) {
+                            const warningDiv = document.createElement('div');
+                            warningDiv.className = 'court-warning-message';
+                            warningDiv.textContent = warningMessage;
+                            courtElement.appendChild(warningDiv);
+                        }
+                        
+                        // 게임 코트 히스토리 체크
+                        const historyMessage = checkGameHistory(court);
+                        if (historyMessage) {
+                            const historyDiv = document.createElement('div');
+                            historyDiv.className = 'court-warning-message';
+                            historyDiv.style.background = '#e3f2fd';
+                            historyDiv.style.color = '#1976d2';
+                            historyDiv.textContent = historyMessage;
+                            courtElement.appendChild(historyDiv);
+                        }
+                    }
+                }
+            });
+
+            // 게임 종료 버튼 활성화/비활성화 및 레슨 코트 상태 업데이트
+            document.querySelectorAll('.end-game-btn').forEach(btn => {
+                const courtElement = btn.closest('.court');
+                const courtType = courtElement.dataset.courtType;
+                const courtIndex = parseInt(courtElement.dataset.courtIndex);
+                const targetCourt = courtType === 'game' 
+                    ? gameData.gameCourts[courtIndex] 
+                    : gameData.waitingCourts[courtIndex];
+                
+                btn.disabled = targetCourt.length === 0;
+            });
+
+            // 레슨 코트 상태 업데이트
+            if (gameData.lessonCourts) {
+                gameData.lessonCourts.forEach((isLesson, index) => {
+                    const courtElement = document.querySelector(`.court.game-court[data-court-index="${index}"]`);
+                    const lessonBtn = courtElement.querySelector('.lesson-btn');
+                    
+                    if (isLesson) {
+                        courtElement.classList.add('lesson-court');
+                        lessonBtn.classList.add('active');
+                        lessonBtn.textContent = '레슨 ✓';
+                    } else {
+                        courtElement.classList.remove('lesson-court');
+                        lessonBtn.classList.remove('active');
+                        lessonBtn.textContent = '레슨';
+                    }
+                });
+            }
+        }
+
+        // 드래그 리브 이벤트 추가
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.court, .waiting-section').forEach(element => {
+                element.addEventListener('dragleave', handleDragLeave);
+            });
+        });
+
+        // 초기화
+        loadData();
+    </script>
+</body>
+</html>
